@@ -7,13 +7,21 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.sao.sao_bank.SAO_Bank;
+import org.sao.sao_bank.database.Database;
+import org.sao.sao_bank.inventory.InventorySerialize;
 
+import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Gui {
     Inventory guiBank;
-    public Gui(Player player, int page) {
+    Database database = SAO_Bank.database;
+    public Gui(Player player, int page) throws SQLException, IOException {
         Inventory gui = Bukkit.createInventory(null, 9*6, "Bank Page - "+ page);
 
         List<ItemStack> allItems = new ArrayList<>();
@@ -75,6 +83,18 @@ public class Gui {
         pageNumberMeta.setDisplayName("Page: " + page);
         pageNumber.setItemMeta(pageNumberMeta);
         gui.setItem(9*5+4, pageNumber);
+
+        String query = "SELECT * FROM bank_inventory WHERE uuid = ? AND num_pages = ?";
+        PreparedStatement statement = database.getConnection().prepareStatement(query);
+        statement.setString(1, player.getUniqueId().toString()); // uuid
+        statement.setInt(2, page);  //
+        ResultSet resultSet = statement.executeQuery();
+        while (resultSet.next()) {
+            ItemStack[] item = InventorySerialize.deseriliaze(resultSet.getString("inventory_content"));
+            for (int i = 0; i < item.length; i++) {
+                gui.setItem(i, item[i]);
+            }
+        }
 
         player.openInventory(gui);
     }

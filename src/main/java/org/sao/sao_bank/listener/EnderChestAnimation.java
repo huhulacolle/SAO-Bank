@@ -17,6 +17,9 @@ import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import org.sao.sao_bank.SAO_Bank;
 
+import java.io.IOException;
+import java.sql.SQLException;
+
 public class EnderChestAnimation implements Listener {
 
     private final SAO_Bank main;
@@ -26,11 +29,13 @@ public class EnderChestAnimation implements Listener {
     }
 
     @EventHandler
-    private void openAnimation(PlayerInteractEvent e) {
+    private void openAnimation(PlayerInteractEvent e) throws SQLException, IOException {
 
         if (e.getClickedBlock().getType() == Material.ENDER_CHEST && e.getAction().isRightClick()) {
 
             e.setCancelled(true);
+
+            new Gui(e.getPlayer(), 1);
 
             Location enderchestLocation = e.getPlayer().getTargetBlock(null, 5).getLocation();
             e.getPlayer().setMetadata("openedEnderChestLocation", new FixedMetadataValue(main, enderchestLocation));
@@ -43,8 +48,6 @@ public class EnderChestAnimation implements Listener {
 
             e.getPlayer().playSound(enderchestLocation, Sound.BLOCK_ENDER_CHEST_OPEN, 0.3f, 1.0f);
 
-
-            new Gui(e.getPlayer(), 1);
         };
     }
 
@@ -62,21 +65,6 @@ public class EnderChestAnimation implements Listener {
             ProtocolLibrary.getProtocolManager().sendServerPacket((Player) e.getPlayer(), closePacket);
 
             ((Player) e.getPlayer()).playSound(enderchestLocation, Sound.BLOCK_ENDER_CHEST_CLOSE, 0.3f, 1.0f);
-        }
-    }
-
-    @EventHandler
-    public void onInventoryClick(InventoryClickEvent e) {
-        if (e.getInventory() !=  null && e.getCurrentItem() != null && e.getView().getTitle().contains("Bank")) {
-            int page = Integer.parseInt(e.getInventory().getItem(47).getItemMeta().getLocalizedName());
-            if(e.getRawSlot() == 47 && e.getCurrentItem().getType().equals(Material.LIME_STAINED_GLASS_PANE)) {
-                new Gui((Player) e.getWhoClicked(), page - 1);
-            } else if(e.getRawSlot() == 51 && e.getCurrentItem().getType().equals(Material.LIME_STAINED_GLASS_PANE)) {
-                new Gui((Player) e.getWhoClicked(), page + 1);
-            } else if (e.getRawSlot() >= 45 && e.getRawSlot() <= 53) {
-                e.setCancelled(true);
-            }
-            e.setCancelled(true);
         }
     }
 }

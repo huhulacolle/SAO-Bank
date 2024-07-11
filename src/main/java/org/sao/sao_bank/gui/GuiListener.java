@@ -7,10 +7,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 
+import java.io.IOException;
+import java.sql.SQLException;
+
 public class GuiListener implements Listener {
 
     @EventHandler
-    public void onInventoryClick(InventoryClickEvent event) {
+    public void onInventoryClick(InventoryClickEvent event) throws SQLException, IOException {
 
         if (event.getInventory() !=  null && event.getCurrentItem() != null && event.getView().getTitle().contains("Bank")) {
             int page = Integer.parseInt(event.getInventory().getItem(47).getItemMeta().getLocalizedName());
@@ -26,7 +29,7 @@ public class GuiListener implements Listener {
     }
 
     @EventHandler
-    public void onChestRightClicked(PlayerInteractEvent playerInteractEvent) {
+    public void onChestRightClicked(PlayerInteractEvent playerInteractEvent) throws SQLException, IOException {
         if (playerInteractEvent.getClickedBlock().getType() == Material.ENDER_CHEST && playerInteractEvent.getAction().isRightClick()) {
             playerInteractEvent.getPlayer().sendMessage("You right clicked an ender chest");
             playerInteractEvent.setCancelled(true);

@@ -23,7 +23,7 @@ public class PageUtil {
     }
 
     public static boolean isPageValid(List<ItemStack> items, int page, int spaces) {
-        if(page <= 0) return false;
+        if(page <= 0 || page >= 4) return false;
 
         int upperBound = page * spaces;
         int lowerBound = page - spaces;
