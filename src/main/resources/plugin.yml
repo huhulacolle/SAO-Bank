@@ -1,0 +1,4 @@
+name: SAO_Bank
+version: '${project.version}'
+main: org.sao.sao_bank.SAO_Bank
+api-version: '1.18'
