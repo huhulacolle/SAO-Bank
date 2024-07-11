@@ -1,26 +1,21 @@
 package org.sao.sao_bank.listener;
 
-import org.bukkit.Bukkit;
+import org.sao.sao_bank.gui.Gui;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.metadata.FixedMetadataValue;
 import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import org.sao.sao_bank.SAO_Bank;
-import org.sao.sao_bank.database.Database;
-
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.util.Objects;
 
 public class EnderChestAnimation implements Listener {
 
@@ -30,18 +25,12 @@ public class EnderChestAnimation implements Listener {
         this.main = main;
     }
 
-    private void openGuiDebug(Player player) {
-        Inventory gui = Bukkit.createInventory(null, 18, "debug");
-        player.openInventory(gui);
-    }
-
     @EventHandler
     private void openAnimation(PlayerInteractEvent e) {
 
         if (e.getClickedBlock().getType() == Material.ENDER_CHEST && e.getAction().isRightClick()) {
-            e.setCancelled(true);
 
-            this.openGuiDebug(e.getPlayer());
+            e.setCancelled(true);
 
             Location enderchestLocation = e.getPlayer().getTargetBlock(null, 5).getLocation();
             e.getPlayer().setMetadata("openedEnderChestLocation", new FixedMetadataValue(main, enderchestLocation));
@@ -53,12 +42,15 @@ public class EnderChestAnimation implements Listener {
             ProtocolLibrary.getProtocolManager().sendServerPacket(e.getPlayer(), openPacket);
 
             e.getPlayer().playSound(enderchestLocation, Sound.BLOCK_ENDER_CHEST_OPEN, 0.3f, 1.0f);
+
+
+            new Gui(e.getPlayer(), 1);
         };
     }
 
     @EventHandler
-    private void closeAnimation(InventoryCloseEvent e) throws SQLException {
-        if (e.getView().getTitle().equals("debug")) {
+    private void closeAnimation(InventoryCloseEvent e) {
+        if (e.getView().getTitle().contains("Bank")) {
             Location enderchestLocation = (Location) e.getPlayer().getMetadata("openedEnderChestLocation").get(0).value();
             e.getPlayer().removeMetadata("openedEnderChestLocation", main);
 
@@ -70,16 +62,21 @@ public class EnderChestAnimation implements Listener {
             ProtocolLibrary.getProtocolManager().sendServerPacket((Player) e.getPlayer(), closePacket);
 
             ((Player) e.getPlayer()).playSound(enderchestLocation, Sound.BLOCK_ENDER_CHEST_CLOSE, 0.3f, 1.0f);
+        }
+    }
 
-            Database database = main.database;
-
-            String query = "INSERT INTO bank_inventory (uuid, num_pages, inventory_content) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE inventory_content = ?";
-            PreparedStatement statement = database.getConnection().prepareStatement(query);
-            statement.setString(1, e.getPlayer().getUniqueId().toString()); // uuidofile_id
-            statement.setInt(2, 1);  // num_pages
-            statement.setString(3, "serializedInventory"); // inventory_content
-            statement.setString(4, "serializedInventory"); // inventory_content
-            statement.executeUpdate();
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent e) {
+        if (e.getInventory() !=  null && e.getCurrentItem() != null && e.getView().getTitle().contains("Bank")) {
+            int page = Integer.parseInt(e.getInventory().getItem(47).getItemMeta().getLocalizedName());
+            if(e.getRawSlot() == 47 && e.getCurrentItem().getType().equals(Material.LIME_STAINED_GLASS_PANE)) {
+                new Gui((Player) e.getWhoClicked(), page - 1);
+            } else if(e.getRawSlot() == 51 && e.getCurrentItem().getType().equals(Material.LIME_STAINED_GLASS_PANE)) {
+                new Gui((Player) e.getWhoClicked(), page + 1);
+            } else if (e.getRawSlot() >= 45 && e.getRawSlot() <= 53) {
+                e.setCancelled(true);
+            }
+            e.setCancelled(true);
         }
     }
 }
