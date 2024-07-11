@@ -16,7 +16,10 @@ import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.events.PacketContainer;
 import com.comphenix.protocol.wrappers.BlockPosition;
 import org.sao.sao_bank.SAO_Bank;
+import org.sao.sao_bank.database.Database;
 
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class EnderChestAnimation implements Listener {
@@ -54,7 +57,7 @@ public class EnderChestAnimation implements Listener {
     }
 
     @EventHandler
-    private void closeAnimation(InventoryCloseEvent e) {
+    private void closeAnimation(InventoryCloseEvent e) throws SQLException {
         if (e.getView().getTitle().equals("debug")) {
             Location enderchestLocation = (Location) e.getPlayer().getMetadata("openedEnderChestLocation").get(0).value();
             e.getPlayer().removeMetadata("openedEnderChestLocation", main);
@@ -67,6 +70,16 @@ public class EnderChestAnimation implements Listener {
             ProtocolLibrary.getProtocolManager().sendServerPacket((Player) e.getPlayer(), closePacket);
 
             ((Player) e.getPlayer()).playSound(enderchestLocation, Sound.BLOCK_ENDER_CHEST_CLOSE, 0.3f, 1.0f);
+
+            Database database = main.database;
+
+            String query = "INSERT INTO bank_inventory (uuid, num_pages, inventory_content) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE inventory_content = ?";
+            PreparedStatement statement = database.getConnection().prepareStatement(query);
+            statement.setString(1, e.getPlayer().getUniqueId().toString()); // uuidofile_id
+            statement.setInt(2, 1);  // num_pages
+            statement.setString(3, "serializedInventory"); // inventory_content
+            statement.setString(4, "serializedInventory"); // inventory_content
+            statement.executeUpdate();
         }
     }
 }
